@@ -1,0 +1,415 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>JavaScript SOAP Client - DEMO</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+	<meta name="script" http-equiv="Content-Script-Type" content="text/javascript" />
+	<meta name="script" http-equiv="Content-Style-Type" content="text/css" />
+	<script type="text/javascript" src="../../soapclient.js"></script>
+	<script type="text/javascript">
+	
+	var url = document.location.href.replace("default.htm", "webservicedemo.asmx");
+	
+	// DEMO 1
+	function HelloWorld()
+	{
+		var pl = new SOAPClientParameters();
+		SOAPClient.invoke(url, "HelloWorld", pl, true, HelloWorld_callBack);
+	}
+	function HelloWorld_callBack(r)
+	{
+		alert(r);
+	}
+	
+	// DEMO 2
+	function HelloTo()
+	{
+		var pl = new SOAPClientParameters();
+		pl.add("name", document.frmDemo.txtName.value);
+		SOAPClient.invoke(url, "HelloTo", pl, true, HelloTo_callBack);
+	}
+	function HelloTo_callBack(r)
+	{
+		alert(r);
+	}
+	
+	// DEMO 3
+	function ServerTime()
+	{
+		var pl = new SOAPClientParameters();
+		SOAPClient.invoke(url, "ServerTime", pl, true, ServerTime_callBack);
+	}
+	function ServerTime_callBack(st)
+	{
+		var ct = new Date();
+		alert("Server: " + st.toLocaleString() + "\r\n[Client: " + ct.toLocaleString() + "]");
+	}
+	
+	// DEMO 4
+	function Wait()
+	{
+		var duration = parseInt(document.frmDemo.ddSleepDuration[document.frmDemo.ddSleepDuration.selectedIndex].value, 10);
+		var pl = new SOAPClientParameters();
+		pl.add("seconds", duration);
+		var ph = document.getElementById("phWait");
+		ph.style.display = "block";
+		SOAPClient.invoke(url, "Wait", pl, true, Wait_callBack);
+	}
+	function Wait_callBack(r)
+	{
+		var img = document.getElementById("phWait");
+		img.style.display = "none";
+		alert("Call to \"Wait\" method completed");
+	}
+	
+	// DEMO 5
+	function ThrowException()
+	{
+		try
+		{
+			var pl = new SOAPClientParameters();
+			var e = SOAPClient.invoke(url, "ThrowException", pl, false);
+		}
+		catch(e)
+		{
+			alert("An error has occured!");
+		}
+	}
+	function ThrowExceptionAsync()
+	{
+	    var pl = new SOAPClientParameters();
+		SOAPClient.invoke(url, "ThrowException", pl, true, ThrowExceptionAsync_callBack);
+	}
+	function ThrowExceptionAsync_callBack(e)
+	{
+	    if(e.constructor.toString().indexOf("function Error()") != -1);
+	        alert("An error has occured!\r\n\r\n" + e.description + "\r\n\r\n[Error code: " + e.number + "]");
+	}
+	
+	// DEMO 6
+	function SyncSample()
+	{
+		var pl = new SOAPClientParameters();
+		pl.add("seconds", 5);
+		var starttime = (new Date).toLocaleTimeString();
+		var r = SOAPClient.invoke(url, "Wait", pl, false);
+		alert("Operation start time: " + starttime + "\r\nOperation end time: " + (new Date).toLocaleTimeString());
+	}
+	
+	// DEMO 7
+	function GetUser()
+	{
+		var username = document.frmDemo.txtUsername.value;
+		var pl = new SOAPClientParameters();
+		pl.add("username", username);
+		SOAPClient.invoke(url, "GetUser", pl, true, GetUser_callBack);
+	}
+	function GetUser_callBack(u)
+	{
+		if(u == null)
+			alert("No user found.\r\n\r\nEnter a username and repeat search.");
+		else
+			alert(
+				"ID: " + u.Id + "\r\n" +
+				"USERNAME: " + u.Username + "\r\n" +
+				"PASSWORD: " + u.Password + "\r\n" +
+				"EXPIRATION: " + u.ExpirationDate.toLocaleString());
+	}
+	
+	// DEMO 8
+	function GetUsers()
+	{
+		var pl = new SOAPClientParameters();
+		SOAPClient.invoke(url, "GetUsers", pl, true, GetUsers_callBack);
+	}
+	function GetUsers_callBack(ul)
+	{
+		alert("Trovati " + ul.length + " utenti:");
+		for(var i = 0; i < ul.length; i++)		
+			alert(
+				"User No. " + (i + 1) + "\r\n\r\n" +
+				"ID: " + ul[i].Id + "\r\n" +
+				"USERNAME: " + ul[i].Username + "\r\n" +
+				"PASSWORD: " + ul[i].Password + "\r\n" +
+				"EXPIRATION: " + ul[i].ExpirationDate.toLocaleString());
+	}
+	
+	// DEMO 9
+	function GetUserList()
+	{
+		var pl = new SOAPClientParameters();
+		SOAPClient.invoke(url, "GetUserList", pl, true, GetUserList_callBack);
+	}
+	function GetUserList_callBack(ul)
+	{
+		alert("Trovati " + ul.length + " utenti:");
+		for(var i = 0; i < ul.length; i++)		
+			alert(
+				"User No. " + (i + 1) + "\r\n\r\n" +
+				"ID: " + ul[i].Id + "\r\n" +
+				"USERNAME: " + ul[i].Username + "\r\n" +
+				"PASSWORD: " + ul[i].Password + "\r\n" +
+				"EXPIRATION: " + ul[i].ExpirationDate.toLocaleString());
+	}
+	
+	// DEMO 10
+	function GetCars()
+	{
+		var cid = document.frmDemo.ddCompany[document.frmDemo.ddCompany.selectedIndex].value;
+		if(cid != "")
+		{
+			// clear car list
+			while(document.frmDemo.ddCar.options.length > 0)
+				document.frmDemo.ddCar.remove(0);
+			// add waiting element
+			var o = document.createElement("OPTION");
+			document.frmDemo.ddCar.options.add(o);
+			o.value = "";
+			o.innerHTML = "Loading...";
+			// disable dropdown
+			document.frmDemo.ddCar.disabled = true;
+			// invoke
+			var pl = new SOAPClientParameters();
+			pl.add("companyid", cid);
+			SOAPClient.invoke(url, "GetCars", pl, true, GetCars_callBack);
+		}
+	}
+	function GetCars_callBack(cl)
+	{
+		// clear car list
+		var c = document.frmDemo.ddCar.options.length;
+		while(document.frmDemo.ddCar.options.length > 0)
+			document.frmDemo.ddCar.remove(0);
+		// add first (empty) element
+		var o = document.createElement("OPTION");
+		document.frmDemo.ddCar.options.add(o);
+		o.value = "";
+		o.innerHTML = "Please, select a model";					
+		// fill car list
+		for(var i = 0; i < cl.length; i++)
+		{
+			var o = document.createElement("OPTION");
+			document.frmDemo.ddCar.options.add(o);
+			o.value = cl[i].Id.toString();
+			o.innerHTML = cl[i].Label;
+		}
+		// enable dropdown
+		document.frmDemo.ddCar.disabled = false;
+	}
+	
+	// DEMO 11
+	function GetSoapResponse()
+	{
+		var pl = new SOAPClientParameters();
+		SOAPClient.invoke(url, "HelloWorld", pl, true, GetSoapResponse_callBack);
+	}
+	function GetSoapResponse_callBack(r, soapResponse)
+	{
+		if(soapResponse.xml)    // IE
+		    alert(soapResponse.xml);
+		else                    // MOZ
+		    alert((new XMLSerializer()).serializeToString(soapResponse));
+	}
+	
+	// DEMO 12
+	function User(id, username, password, expirationdate)
+	{
+        this.Id = id;
+	    this.Username = username;
+	    this.Password = password;
+	    this.ExpirationDate = expirationdate;
+	}
+	function SendSamples_callBack(r)
+	{
+		if(r.constructor.toString().indexOf("function Error()") != -1)
+	        alert("ERROR\r\n\r\n" + r.description + "\r\n\r\n[" + r.number + "]");
+		else
+		    alert(r);
+	}
+	function SendSample1()
+	{
+	    var p1 = "This is a string";
+	    var p2 = 34654;
+	    var p3 = 3.14159;
+	    var p4 = true;
+	    var p5 = new Date();
+	    var pl = new SOAPClientParameters();
+		pl.add("p1", p1);
+		pl.add("p2", p2);
+		pl.add("p3", p3);
+		pl.add("p4", p4);
+		pl.add("p5", p5);
+	    SOAPClient.invoke(url, "SendSample1", pl, true, SendSamples_callBack);
+	}
+	function SendSample2()
+	{
+	    var list = new Array();
+	    list[0] = "element 1";
+	    list[1] = "element 2";
+	    list[2] = "element 3";
+	    list[3] = "element 4";
+	    var pl = new SOAPClientParameters();
+		pl.add("list", list);
+		SOAPClient.invoke(url, "SendSample2", pl, true, SendSamples_callBack);
+	}
+	function SendSample3()
+	{
+	    var list = new Array();
+	    list[0] = 235;
+	    list[1] = 9876;
+	    list[2] = 124;
+	    list[3] = 79865;
+	    list[4] = 53;
+	    var pl = new SOAPClientParameters();
+		pl.add("list", list);
+		SOAPClient.invoke(url, "SendSample3", pl, true, SendSamples_callBack);
+	}
+	function SendSample4a()
+	{
+        var u = new User(34, "Administrator", "p@ss01!", new Date());        	      
+	    var pl = new SOAPClientParameters();
+		pl.add("user", u);
+	    SOAPClient.invoke(url, "SendSample4", pl, true, SendSamples_callBack);
+	}
+	function SendSample4b()
+	{
+        var u = new Object();
+        u.Id = 5271;
+	    u.Username = "Guest1";
+	    u.Password = "GuestP@ss!";
+	    u.ExpirationDate = new Date();
+	    u.ExpirationDate.setMonth(u.ExpirationDate.getMonth() + 1);
+	    var pl = new SOAPClientParameters();
+		pl.add("user", u);
+	    SOAPClient.invoke(url, "SendSample4", pl, true, SendSamples_callBack);
+	}
+	function SendSample4c()
+	{  
+        var u = new Array();
+        u["Id"] = 654;
+	    u["Username"] = "Guest2";
+	    u["Password"] = "GuestP@ss!";
+	    u["ExpirationDate"] = new Date();
+	    u["ExpirationDate"].setMonth(u["ExpirationDate"].getMonth() + 1);
+	    var pl = new SOAPClientParameters();
+		pl.add("user", u);
+	    SOAPClient.invoke(url, "SendSample4", pl, true, SendSamples_callBack);
+	}
+	function SendSample5()
+	{  
+	    var ul = new Array();
+	    ul[0] = new User(52342, "User1", "User1P@ss!", new Date());
+	    ul[1] = new User(453, "User2", "User2P@ss!", new Date());
+	    ul[2] = new User(5756, "User3", "User3P@ss!", new Date());
+	    ul[3] = new User(5431, "User4", "User4P@ss!", new Date());
+	    var pl = new SOAPClientParameters();
+		pl.add("userlist", ul);
+	    SOAPClient.invoke(url, "SendSample5", pl, true, SendSamples_callBack);
+	}
+	
+	// utils
+	function toggle(id) 
+	{
+		var d = document.getElementById(id);
+		if(d != null)
+			d.className = (d.className == "h") ? "s" : "h"; 
+	} 
+
+	</script>
+</head>
+<body>
+    
+<div>
+	<h1><span id="ctl00_lblTitle">JavaScript SOAP Client - DEMO</span></h1>
+    <form id="frmDemo" name="frmDemo" action="#" method="post">      
+	
+        <h2>DEMO 1: "Hello World!"</h2>
+        <p>The simplest example you can imagine (but maybe not the most fanciful...):</p>
+        <input type="button" value="Say &quot;Hello world&quot;" onclick="HelloWorld();" />
+    	
+	    <hr />
+	    <h2>DEMO 2: Using parameters (base)</h2>
+        <p>Passing parameters to the Web Service (see also DEMO 12):</p> 
+	    <label>Your name: </label><input type="text" name="txtName" id="txtName" value="Matteo" />
+	    <input type="button" value="Say hello to me" onclick="HelloTo();" />
+
+    	
+	    <hr />
+	    <h2>DEMO 3: Using .NET framework core classes</h2>
+        <p>Using a date as return type (.NET "DateTime" automatically converted to JavaScript "Date")</p> 
+		<input type="button" value="Server date and time" onclick="ServerTime();" />
+	    
+	    <hr />
+	    <h2>DEMO 4: Void methods</h2>
+        <p>Calling a void method with a long response-time (while waiting for the response an orange box is displayed):</p> 
+		<select name="ddSleepDuration" id="ddSleepDuration">
+			<option value="0">Immediate (0 seconds)</option>
+			<option value="5">5-second delay</option>
+			<option value="10">10-second delay</option>
+			<option value="30">30-second delay</option>
+		</select>
+		<input type="button" value="Start" onclick="Wait();" />
+		<div id="phWait" style="display:none; margin: 10px 10px 10px 0px; padding: 10px; border: 3px solid #999; background-color: #eee; width: 200px; text-align: center;">Please wait...</div>
+        
+	    <hr />
+	    <p>Handling exceptions:</p> 
+		<input type="button" value="Throw exception" onclick="ThrowException();" />
+		<input type="button" value="Throw exception (async)" onclick="ThrowExceptionAsync();" />
+    	           
+	    <hr />
+	    <h2>DEMO 6: Sync calls</h2>
+        <p>Syncronous call example: server response is delayed 5 seconds using "Wait" method (see demo No. 4). Please note that browser is stuck until response is received:</p> 
+		<input type="button" value="Start" onclick="SyncSample();" />
+    	
+	    <hr />
+	    <h2>DEMO 7: Using custom entities (classes)</h2>
+        <p>Leaving the textbox empty, the web method will return a <kbd>null</kbd>; entering any value a <kbd>User</kbd> object with random property values will be returned:</p> 
+		<label for="txtUsername">Username: </label><input type="text" name="txtUsername" id="txtUsername" value="" /><input type="button" value="Find user..." onclick="GetUser();" />
+		
+	    <hr />
+	    <h2>DEMO 8: Arrays</h2>
+        <p>Using custom entity arrays. The web method returns an array with 4 <kbd>User</kbd> objects (see demo No. 7)</p> 
+		<input type="button" value="Get users" onclick="GetUsers();" />
+    	
+	    <hr />
+	    <h2>DEMO 9: ICollection</h2>
+        <p>Custom entity collection (System.Collections.ICollection). The web method returns a <kbd>UserList</kbd> object, typed collection of <kbd>User</kbd> (see demo No. 7) with 3 elements.</p> 
+		<input type="button" value="Get users" onclick="GetUserList();" />
+
+	    <hr />
+	    <h2>DEMO 10: Practical usage</h2>
+        <p>Fill options with AJAX:</p> 
+		<select name="ddCompany" id="ddCompany" onchange="GetCars();">
+			<option value="">Please, select a company...</option>
+			<option value="vw">Volkswagen</option>
+			<option value="f">FIAT</option>
+			<option value="bmw">BMW</option>
+		</select>
+		<select name="ddCar" id="ddCar" style="width:200px;"></select>
+    	
+	    <hr />
+	    <h2>DEMO 11: Using the SOAP response (xml)</h2>
+        <p>
+			How to use the SOAP response (XmlDocument) in callback method.
+			In this example we show only the Xml in an alertbox, but you can - for example - transform the SOAP response using a stylesheet (XSL).
+		</p>
+        <input type="button" value="Show SOAP response" onclick="GetSoapResponse();" />
+    	
+	    <hr />
+	    <h2>DEMO 12: Using parameters (advanced)</h2>
+        <p>Passing complex parameters to the Web Service</p>
+        <p><b>Example #1:</b> string, int, float, bool, Date</p><input type="button" value="Send - 1" onclick="SendSample1();" />
+        <p><b>Example #2:</b> string[]</p><input type="button" value="Send - 2" onclick="SendSample2();" />
+        <p><b>Example #3:</b> int[]</p><input type="button" value="Send - 3" onclick="SendSample3();" />
+        <p><b>Example #4:</b> User (custom object)</p>
+        <input type="button" value="Send - 4a" onclick="SendSample4a();" />
+        <input type="button" value="Send - 4b" onclick="SendSample4b();" />
+        <input type="button" value="Send - 4c" onclick="SendSample4c();" />
+        <p><b>Example #5:</b> User[] (custom object list)</p><input type="button" value="Send - 5" onclick="SendSample5();" />
+    	
+    </form>
+</div>     
+    
+</body>
+</html>
