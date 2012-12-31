@@ -11,6 +11,7 @@ On the client side we use the WSDL (Web Service Description Language) to automat
 The Client invokes the SOAPClient.invoke method using a JavaScript function and specifying the following:
 - Web Service URL (pls note that many browsers do not allow cross-domain calls for security reasons)
 - Web method name
+- Web header parameter values
 - Web method parameter values
 - Call mode (async = true, sync = false)
 - CallBack method invoked upon response reception (optional for sync calls)
